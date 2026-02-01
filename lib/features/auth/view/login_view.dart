@@ -37,7 +37,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
         .login(
           email: emailController.text.trim(),
           password: passwordController.text,
-          confirmPassword: passwordController.text,
           context: context,
         );
   }

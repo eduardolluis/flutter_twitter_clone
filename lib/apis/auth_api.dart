@@ -20,7 +20,6 @@ abstract class IAuthApi {
   FutureEither<models.Session> login({
     required String email,
     required String password,
-    required String confirmPassword,
   });
 }
 
@@ -59,13 +58,8 @@ class AuthAPI implements IAuthApi {
   FutureEither<models.Session> login({
     required String email,
     required String password,
-    required String confirmPassword,
   }) async {
     try {
-      if (password != confirmPassword) {
-        return left(Failure("Passwords do not match", StackTrace.current));
-      }
-
       final session = await _account.createEmailPasswordSession(
         email: email,
         password: password,
@@ -80,4 +74,4 @@ class AuthAPI implements IAuthApi {
       return left(Failure(e.toString(), stackTrace));
     }
   }
-}
+} 

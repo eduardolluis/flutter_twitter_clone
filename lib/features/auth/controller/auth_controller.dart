@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:twitter_clone/apis/auth_api.dart';
 import 'package:twitter_clone/core/utils.dart';
+import 'package:twitter_clone/features/auth/view/login_view.dart';
+import 'package:twitter_clone/features/home/view/home_view.dart';
 
 final authControllerProvider = StateNotifierProvider<AuthController, bool>((
   ref,
@@ -21,49 +23,32 @@ class AuthController extends StateNotifier<bool> {
     required BuildContext context,
   }) async {
     state = true;
+    final res = await _authAPI.signUp(
+      email: email,
+      password: password,
+      confirmPassword: confirmPassword,
+    );
+    state = false;
 
-    try {
-      final res = await _authAPI.signUp(
-        email: email,
-        password: password,
-        confirmPassword: confirmPassword,
-      );
-
-      res.fold((l) => showSnackbar(context, l.message), (r) {
-        // ignore: avoid_print
-        print('User created: ${r.email}');
-        showSnackbar(context, 'Account created successfully!');
-      });
-    } catch (e) {
-      showSnackbar(context, 'Error: $e');
-    } finally {
-      state = false;
-    }
+    res.fold((l) => showSnackbar(context, l.message), (r) {
+      showSnackbar(context, 'Account created! Please login');
+      Navigator.push(context, LoginView.route());
+    });
   }
 
   void login({
     required String email,
     required String password,
-    required String confirmPassword,
     required BuildContext context,
   }) async {
     state = true;
+    final res = await _authAPI.login(email: email, password: password);
+    state = false;
 
-    try {
-      final res = await _authAPI.login(
-        email: email,
-        password: password,
-        confirmPassword: confirmPassword,
-      );
-
-      res.fold((l) => showSnackbar(context, l.message), (r) {
-        // ignore: avoid_print
-        print(r.userId);
-      });
-    } catch (e) {
-      showSnackbar(context, 'Error: $e');
-    } finally {
-      state = false;
-    }
+    res.fold((l) => showSnackbar(context, l.message), (r) {
+      showSnackbar(context, 'Login successful!');
+      Navigator.push(context, HomeView.route());
+      // Aquí puedes navegar a la pantalla principal
+    });
   }
 }
