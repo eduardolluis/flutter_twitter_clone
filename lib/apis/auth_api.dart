@@ -16,6 +16,12 @@ abstract class IAuthApi {
     required String password,
     required String confirmPassword,
   });
+
+  FutureEither<models.Session> login({
+    required String email,
+    required String password,
+    required String confirmPassword,
+  });
 }
 
 class AuthAPI implements IAuthApi {
@@ -33,13 +39,39 @@ class AuthAPI implements IAuthApi {
         return left(Failure("Passwords do not match", StackTrace.current));
       }
 
-      final user = await _account.create(
+      final account = await _account.create(
         userId: ID.unique(),
         email: email,
         password: password,
       );
 
-      return right(user);
+      return right(account);
+    } on AppwriteException catch (e, stackTrace) {
+      return left(
+        Failure(e.message ?? "Some unexpected error occurred", stackTrace),
+      );
+    } catch (e, stackTrace) {
+      return left(Failure(e.toString(), stackTrace));
+    }
+  }
+
+  @override
+  FutureEither<models.Session> login({
+    required String email,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    try {
+      if (password != confirmPassword) {
+        return left(Failure("Passwords do not match", StackTrace.current));
+      }
+
+      final session = await _account.createEmailPasswordSession(
+        email: email,
+        password: password,
+      );
+
+      return right(session);
     } on AppwriteException catch (e, stackTrace) {
       return left(
         Failure(e.message ?? "Some unexpected error occurred", stackTrace),
