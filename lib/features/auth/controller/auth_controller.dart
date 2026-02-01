@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:appwrite/models.dart' as model;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:twitter_clone/apis/auth_api.dart';
 import 'package:twitter_clone/core/utils.dart';
@@ -11,10 +12,17 @@ final authControllerProvider = StateNotifierProvider<AuthController, bool>((
   return AuthController(authAPI: ref.watch(authAPIProvider));
 });
 
+final currentUserAccountProvider = FutureProvider((ref) {
+  final authController = ref.watch(authControllerProvider.notifier);
+  return authController.currentUser();
+});
+
 class AuthController extends StateNotifier<bool> {
   final AuthAPI _authAPI;
 
   AuthController({required AuthAPI authAPI}) : _authAPI = authAPI, super(false);
+
+  Future<model.User?> currentUser() => _authAPI.currentUserAccount();
 
   void signUp({
     required String email,
@@ -48,7 +56,6 @@ class AuthController extends StateNotifier<bool> {
     res.fold((l) => showSnackbar(context, l.message), (r) {
       showSnackbar(context, 'Login successful!');
       Navigator.push(context, HomeView.route());
-      // Aquí puedes navegar a la pantalla principal
     });
   }
 }
