@@ -1,5 +1,5 @@
 import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/appwrite.dart' as model;
+import 'package:appwrite/models.dart' as models;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:twitter_clone/core/core.dart';
@@ -11,7 +11,7 @@ final authAPIProvider = Provider((ref) {
 });
 
 abstract class IAuthApi {
-  FutureEither<Account> signUp({
+  FutureEither<models.User> signUp({
     required String email,
     required String password,
     required String confirmPassword,
@@ -23,18 +23,23 @@ class AuthAPI implements IAuthApi {
   AuthAPI({required Account account}) : _account = account;
 
   @override
-  FutureEither<model.Account> signUp({
+  FutureEither<models.User> signUp({
     required String email,
     required String password,
     required String confirmPassword,
   }) async {
     try {
-      final account = await _account.create(
+      if (password != confirmPassword) {
+        return left(Failure("Passwords do not match", StackTrace.current));
+      }
+
+      final user = await _account.create(
         userId: ID.unique(),
         email: email,
         password: password,
       );
-      return right(account as model.Account);
+
+      return right(user);
     } on AppwriteException catch (e, stackTrace) {
       return left(
         Failure(e.message ?? "Some unexpected error occurred", stackTrace),
