@@ -10,8 +10,7 @@ import 'package:twitter_clone/features/auth/widget/auth_field.dart';
 import 'package:twitter_clone/theme/pallete.dart';
 
 class SignUpView extends ConsumerStatefulWidget {
-  static dynamic route() =>
-      MaterialPageRoute(builder: (context) => const SignUpView());
+  static route() => MaterialPageRoute(builder: (context) => const SignUpView());
   const SignUpView({super.key});
 
   @override
