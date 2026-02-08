@@ -17,13 +17,18 @@ final authControllerProvider = StateNotifierProvider<AuthController, bool>((
   );
 });
 
-final currentUserDetailsProvider = FutureProvider((ref) {
-  final currentUserId = ref.watch(currentUserAccountProvider).value!.$id;
-  final userDetails = ref.watch(userDetailsProvider(currentUserId));
-  return userDetails.value;
+final currentUserDetailsProvider = FutureProvider<UserModel?>((ref) async {
+  final account = await ref.watch(currentUserAccountProvider.future);
+  if (account == null) return null;
+
+  final doc = await ref.watch(userDetailsProvider(account.$id).future);
+  return doc;
 });
 
-final userDetailsProvider = FutureProvider.family((ref, String uid) {
+final userDetailsProvider = FutureProvider.family<UserModel, String>((
+  ref,
+  uid,
+) {
   final authController = ref.watch(authControllerProvider.notifier);
   return authController.getUserData(uid);
 });

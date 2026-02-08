@@ -73,6 +73,10 @@ class AuthAPI implements IAuthApi {
     required String password,
   }) async {
     try {
+      try {
+        await _account.deleteSession(sessionId: 'current');
+      } catch (_) {}
+
       final session = await _account.createEmailPasswordSession(
         email: email,
         password: password,
