@@ -8,6 +8,7 @@ import 'package:twitter_clone/common/common.dart';
 import 'package:twitter_clone/constants/assets_constants.dart';
 import 'package:twitter_clone/core/utils.dart';
 import 'package:twitter_clone/features/auth/controller/auth_controller.dart';
+import 'package:twitter_clone/features/tweet/controller/tweet_controller.dart';
 import 'package:twitter_clone/theme/pallete.dart';
 
 class CreateTweetSCreen extends ConsumerStatefulWidget {
@@ -30,14 +31,29 @@ class _CreateTweetSCreenState extends ConsumerState<CreateTweetSCreen> {
     tweetTextController.dispose();
   }
 
+  void shareTweet() {
+    ref
+        .read(tweetControllerProvider.notifier)
+        .shareTweet(
+          images: images,
+          text: tweetTextController.text,
+          context: context,
+        );
+  }
+
   void onPickImage() async {
-    await pickImages();
-    setState(() {});
+    final res = await pickImages();
+
+    setState(() {
+      images = res;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserDetailsProvider);
+
+    final isLoading = ref.watch(tweetControllerProvider);
 
     return userAsync.when(
       loading: () => const Loader(),
@@ -55,60 +71,64 @@ class _CreateTweetSCreenState extends ConsumerState<CreateTweetSCreen> {
             ),
             actions: [
               RoundedSmallButton(
-                onTap: () {},
+                onTap: shareTweet,
                 label: 'Tweet',
                 backgroundColor: Pallete.blueColor,
                 textColor: Pallete.whiteColor,
               ),
             ],
           ),
-          body: SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundImage: NetworkImage(user.profilePic),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: TextField(
-                          controller: tweetTextController,
-                          style: const TextStyle(fontSize: 22),
-                          decoration: const InputDecoration(
-                            hintText: 'What\'s happening?',
-                            hintStyle: TextStyle(
-                              color: Pallete.greyColor,
-                              fontSize: 22,
-                              fontWeight: FontWeight.w600,
+          body: isLoading
+              ? const Loader()
+              : SafeArea(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 30,
+                              backgroundImage: NetworkImage(user.profilePic),
                             ),
-                            border: InputBorder.none,
-                          ),
-                          maxLines: null,
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: TextField(
+                                controller: tweetTextController,
+                                style: const TextStyle(fontSize: 22),
+                                decoration: const InputDecoration(
+                                  hintText: 'What\'s happening?',
+                                  hintStyle: TextStyle(
+                                    color: Pallete.greyColor,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  border: InputBorder.none,
+                                ),
+                                maxLines: null,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
-                  if (images.isNotEmpty)
-                    CarouselSlider(
-                      items: images.map((file) {
-                        return Container(
-                          width: MediaQuery.of(context).size.width,
-                          margin: const EdgeInsets.symmetric(horizontal: 5),
-                          child: Image.file(file),
-                        );
-                      }).toList(),
-                      options: CarouselOptions(
-                        height: 400,
-                        enableInfiniteScroll: false,
-                      ),
+                        if (images.isNotEmpty)
+                          CarouselSlider(
+                            items: images.map((file) {
+                              return Container(
+                                width: MediaQuery.of(context).size.width,
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                ),
+                                child: Image.file(file),
+                              );
+                            }).toList(),
+                            options: CarouselOptions(
+                              height: 400,
+                              enableInfiniteScroll: false,
+                            ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
-            ),
-          ),
+                  ),
+                ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.only(bottom: 10),
             decoration: const BoxDecoration(
