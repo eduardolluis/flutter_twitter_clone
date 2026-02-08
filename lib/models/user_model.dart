@@ -110,3 +110,4 @@ class UserModel {
         isTwitterBlue.hashCode;
   }
 }
+    
