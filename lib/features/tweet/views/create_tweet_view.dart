@@ -39,7 +39,9 @@ class _CreateTweetSCreenState extends ConsumerState<CreateTweetSCreen> {
           text: tweetTextController.text,
           context: context,
         );
+    Navigator.pop(context);
   }
+  
 
   void onPickImage() async {
     final res = await pickImages();

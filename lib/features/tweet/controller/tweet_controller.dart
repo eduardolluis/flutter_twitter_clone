@@ -53,6 +53,7 @@ class TweetController extends StateNotifier<bool> {
   }) {
     if (text.isEmpty) {
       showSnackbar(context, 'Please enter text');
+      return;
     }
 
     if (images.isNotEmpty) {
