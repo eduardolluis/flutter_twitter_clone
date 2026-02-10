@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:appwrite/appwrite.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:twitter_clone/apis/storage_api.dart';
@@ -47,17 +48,52 @@ class TweetController extends StateNotifier<bool> {
     return tweetList.map((tweet) => Tweet.fromMap(tweet.data)).toList();
   }
 
-  void likeTweet(Tweet tweet, UserModel user) async {
-    List<String> likes = tweet.likes;
+  Future<void> likeTweet(
+    Tweet tweet,
+    UserModel user,
+    BuildContext context,
+  ) async {
+    final likes = List<String>.from(tweet.likes);
 
-    if (tweet.likes.contains(user.uid)) {
+    if (likes.contains(user.uid)) {
       likes.remove(user.uid);
     } else {
       likes.add(user.uid);
     }
-    tweet = tweet.copyWith(likes: likes);
-    final res = await _tweetAPI.likeTweet(tweet);
-    res.fold((l) => null, (r) => null);
+
+    final updatedTweet = tweet.copyWith(likes: likes);
+
+    final res = await _tweetAPI.likeTweet(updatedTweet);
+
+    res.fold((l) => showSnackbar(context, l.message), (r) => null);
+  }
+
+  Future<void> reshareTweet(
+    Tweet tweet,
+    UserModel currentUser,
+    BuildContext context,
+  ) async {
+    tweet = tweet.copyWith(
+      retweetedBy: [currentUser.name],
+      likes: [],
+      commentIds: [],
+      reshareCount: tweet.reshareCount + 1,
+    );
+
+    final res = await _tweetAPI.updateReshareCount(tweet);
+
+    res.fold((l) => showSnackbar(context, l.message), (r) async {
+      tweet = tweet.copyWith(
+        id: ID.unique(),
+        reshareCount: 0,
+        tweetedAt: DateTime.now(),
+      );
+      final res2 = await _tweetAPI.shareTweet(tweet);
+      res2.fold(
+        (l) => showSnackbar(context, l.message),
+        (r) => showSnackbar(context, 'Rweeted!'),
+      );
+    });
   }
 
   void shareTweet({
