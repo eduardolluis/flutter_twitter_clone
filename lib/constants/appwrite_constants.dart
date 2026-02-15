@@ -6,6 +6,7 @@ class AppwriteConstants {
 
   static const String usersCollection = 'users';
   static const String tweetsCollection = 'tweets';
+  static const String notificationsCollection = 'notifications';
 
   static const String imagesBucket = '6988f36900104b96baec';
 
