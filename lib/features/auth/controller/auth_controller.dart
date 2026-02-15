@@ -75,6 +75,7 @@ class AuthController extends StateNotifier<bool> {
         bio: '',
         isTwitterBlue: false,
       );
+
       final res2 = await _userAPI.saveUserData(userModel);
       res2.fold((l) => showSnackbar(context, l.message), (r) {
         showSnackbar(context, 'Account created! Please login');
@@ -95,6 +96,22 @@ class AuthController extends StateNotifier<bool> {
     res.fold((l) => showSnackbar(context, l.message), (r) {
       showSnackbar(context, 'Login successful!');
       Navigator.push(context, HomeView.route());
+    });
+  }
+
+  /// ✅ ESTO ES LO QUE TE FALTABA
+  void logout({required BuildContext context}) async {
+    state = true;
+    final res = await _authAPI.logout();
+    state = false;
+
+    res.fold((l) => showSnackbar(context, l.message), (r) {
+      // Evita que el user vuelva atrás al home con back
+      Navigator.pushAndRemoveUntil(
+        context,
+        LoginView.route(),
+        (route) => false,
+      );
     });
   }
 
