@@ -12,36 +12,38 @@ import 'package:twitter_clone/models/user_model.dart';
 // Controller provider
 final userProfileControllerProvider =
     StateNotifierProvider<UserProfileController, bool>((ref) {
-  return UserProfileController(
-    tweetApi: ref.watch(tweetAPIProvider),
-    storageAPI: ref.watch(storageAPIProvider),
-    userAPI: ref.watch(userAPIProvider),
-  );
-});
+      return UserProfileController(
+        tweetApi: ref.watch(tweetAPIProvider),
+        storageAPI: ref.watch(storageAPIProvider),
+        userAPI: ref.watch(userAPIProvider),
+      );
+    });
 
 final getUserTweetsProvider = FutureProvider.family<List<Tweet>, String>((
   ref,
   String uid,
 ) async {
-  final userProfileController = ref.watch(userProfileControllerProvider.notifier);
+  final userProfileController = ref.watch(
+    userProfileControllerProvider.notifier,
+  );
   return userProfileController.getUserTweets(uid);
 });
 
 final getLatestUserProfileDataProvider =
     StreamProvider.family<UserModel, String>((ref, String uid) {
-  final userAPI = ref.watch(userAPIProvider);
+      final userAPI = ref.watch(userAPIProvider);
 
-  return userAPI.getLatestUserProfileData(uid).asyncMap((msg) async {
-    final payload = msg.payload;
+      return userAPI.getLatestUserProfileData(uid).asyncMap((msg) async {
+        final payload = msg.payload;
 
-    if (payload.isEmpty || payload['\$id'] == null) {
-      final doc = await userAPI.getUserData(uid);
-      return UserModel.fromMap(doc.data);
-    }
+        if (payload.isEmpty || payload['\$id'] == null) {
+          final doc = await userAPI.getUserData(uid);
+          return UserModel.fromMap(doc.data);
+        }
 
-    return UserModel.fromMap(payload);
-  });
-});
+        return UserModel.fromMap(payload);
+      });
+    });
 
 class UserProfileController extends StateNotifier<bool> {
   final TweetApi _tweetApi;
@@ -52,10 +54,10 @@ class UserProfileController extends StateNotifier<bool> {
     required TweetApi tweetApi,
     required StorageAPI storageAPI,
     required UserAPI userAPI,
-  })  : _userAPI = userAPI,
-        _tweetApi = tweetApi,
-        _storageAPI = storageAPI,
-        super(false);
+  }) : _userAPI = userAPI,
+       _tweetApi = tweetApi,
+       _storageAPI = storageAPI,
+       super(false);
 
   Future<List<Tweet>> getUserTweets(String uid) async {
     final tweets = await _tweetApi.getUserTweets(uid);
@@ -88,5 +90,28 @@ class UserProfileController extends StateNotifier<bool> {
       (l) => showSnackbar(context, l.message),
       (r) => Navigator.pop(context),
     );
+  }
+
+  void followUser({
+    required UserModel user,
+    required BuildContext context,
+    required UserModel currentUser,
+  }) async {
+    if (currentUser.following.contains(user.uid)) {
+      user.followers.remove(currentUser.uid);
+      currentUser.following.remove(user.uid);
+    } else {
+      user.followers.add(currentUser.uid);
+      currentUser.following.add(user.uid);
+    }
+
+    user = user.copyWith(followers: user.followers);
+    currentUser = currentUser.copyWith(following: currentUser.following);
+
+    final res = await _userAPI.followUser(user);
+    res.fold((l) => showSnackbar(context, l.message), (r) async {
+      final res2 = await _userAPI.addToFollowing(currentUser);
+      res2.fold((l) => showSnackbar(context, l.message), (r) => null);
+    });
   }
 }
