@@ -8,7 +8,10 @@ import 'package:twitter_clone/core/providers.dart';
 import 'package:twitter_clone/models/user_model.dart';
 
 final userAPIProvider = Provider((ref) {
-  return UserAPI(db: ref.watch(appwriteDatabaseProvider));
+  return UserAPI(
+    db: ref.watch(appwriteDatabaseProvider),
+    realtime: ref.watch(appwriteRealtimeProvider),
+  );
 });
 
 abstract class IUserAPI {
@@ -16,11 +19,15 @@ abstract class IUserAPI {
   Future<Document> getUserData(String uid);
   Future<List<Document>> searchUserByName(String name);
   FutureEitherVoid updateUserData(UserModel userModel);
+  Stream<RealtimeMessage> getLatestUserProfileData(String uid);
 }
 
 class UserAPI implements IUserAPI {
   final Databases _db;
-  UserAPI({required Databases db}) : _db = db;
+  final Realtime _realtime;
+  UserAPI({required Databases db, required Realtime realtime})
+    : _db = db,
+      _realtime = realtime;
 
   @override
   FutureEitherVoid saveUserData(UserModel userModel) async {
@@ -76,5 +83,12 @@ class UserAPI implements IUserAPI {
     } catch (e, st) {
       return left(Failure(e.toString(), st));
     }
+  }
+
+  @override
+  Stream<RealtimeMessage> getLatestUserProfileData(String uid) {
+    return _realtime.subscribe([
+      'databases.${AppwriteConstants.databaseId}.collections.${AppwriteConstants.usersCollection}.documents.$uid',
+    ]).stream;
   }
 }
