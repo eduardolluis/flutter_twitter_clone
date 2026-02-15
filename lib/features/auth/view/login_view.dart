@@ -32,13 +32,23 @@ class _LoginViewState extends ConsumerState<LoginView> {
   }
 
   void onLogin() {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
+      return;
+    }
+
     ref
         .read(authControllerProvider.notifier)
-        .login(
-          email: emailController.text.trim(),
-          password: passwordController.text,
-          context: context,
-        );
+        .login(email: email, password: password, context: context);
+
+    // Limpiar campos después de intentar login
+    emailController.clear();
+    passwordController.clear();
   }
 
   @override
