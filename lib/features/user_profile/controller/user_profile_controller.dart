@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:twitter_clone/apis/storage_api.dart';
 import 'package:twitter_clone/apis/tweet_api.dart';
 import 'package:twitter_clone/apis/user_api.dart';
+import 'package:twitter_clone/core/enums/notification_type_enum.dart';
 import 'package:twitter_clone/core/utils.dart';
+import 'package:twitter_clone/features/notifications/controller/notification_controller.dart';
 import 'package:twitter_clone/models/tweet_model.dart';
 import 'package:twitter_clone/models/user_model.dart';
 
@@ -16,6 +18,9 @@ final userProfileControllerProvider =
         tweetApi: ref.watch(tweetAPIProvider),
         storageAPI: ref.watch(storageAPIProvider),
         userAPI: ref.watch(userAPIProvider),
+        notificationController: ref.watch(
+          notificationControllerProvider.notifier,
+        ),
       );
     });
 
@@ -49,12 +54,15 @@ class UserProfileController extends StateNotifier<bool> {
   final TweetApi _tweetApi;
   final StorageAPI _storageAPI;
   final UserAPI _userAPI;
+  final NotificationController _notificationController;
 
   UserProfileController({
     required TweetApi tweetApi,
     required StorageAPI storageAPI,
     required UserAPI userAPI,
-  }) : _userAPI = userAPI,
+    required NotificationController notificationController,
+  }) : _notificationController = notificationController,
+       _userAPI = userAPI,
        _tweetApi = tweetApi,
        _storageAPI = storageAPI,
        super(false);
@@ -111,7 +119,14 @@ class UserProfileController extends StateNotifier<bool> {
     final res = await _userAPI.followUser(user);
     res.fold((l) => showSnackbar(context, l.message), (r) async {
       final res2 = await _userAPI.addToFollowing(currentUser);
-      res2.fold((l) => showSnackbar(context, l.message), (r) => null);
+      res2.fold((l) => showSnackbar(context, l.message), (r) {
+        _notificationController.createNotification(
+          text: '${currentUser.name} started following you!',
+          uid: user.uid,
+          postId: '',
+          notificationType: NotificationType.follow,
+        );  
+      });
     });
   }
 }
